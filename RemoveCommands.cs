@@ -7,6 +7,7 @@ using Terraria;
 using TerrariaApi.Server;
 using System.Reflection;
 using System.IO;
+using TShockAPI.Hooks;
 
 namespace RemoveCommands
 {
@@ -36,6 +37,19 @@ namespace RemoveCommands
         {
             LoadConfig();
             ServerApi.Hooks.GameInitialize.Register(this, OnInitialize);
+            ServerApi.Hooks.GamePostInitialize.Register(this, OnInitialize);
+            GeneralHooks.ReloadEvent += reload;
+            foreach (string temp in Config.Commands)
+            {
+                for (int i = 0; i < Commands.ChatCommands.Count; i++)
+                {
+                    if (Commands.ChatCommands[i].Names.Contains(temp))
+                    {
+                        Commands.ChatCommands.Remove(Commands.ChatCommands[i]);
+                        continue;
+                    }
+                }
+            }
         }
 
         protected override void Dispose(bool disposing)
@@ -43,6 +57,7 @@ namespace RemoveCommands
             if (disposing)
             {
                 ServerApi.Hooks.GameInitialize.Deregister(this, OnInitialize);
+                ServerApi.Hooks.GamePostInitialize.Deregister(this, OnInitialize);
             }
             base.Dispose(disposing);
         }
@@ -59,6 +74,22 @@ namespace RemoveCommands
                     }
                 }
             }
+        }
+        private void reload(ReloadEventArgs args)
+        {
+            LoadConfig();
+            foreach (string temp in Config.Commands)
+            {
+                for (int i = 0; i < Commands.ChatCommands.Count; i++)
+                {
+                    if (Commands.ChatCommands[i].Names.Contains(temp))
+                    {
+                        Commands.ChatCommands.Remove(Commands.ChatCommands[i]);
+                        continue;
+                    }
+                }
+            }
+            args.Player.SendSuccessMessage("[Remove Commands] Reload Success!");
         }
     }
 }
